@@ -13,7 +13,7 @@ python libraries:
 - `moveipy`
 - `pydub`
 - `mutagen`
-\\
+
 Additional:
 - ffmpeg
 
