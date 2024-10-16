@@ -1,0 +1,18 @@
+{
+    "canvas": {
+        "size": [16,9],
+        "color": [0.12, 0.15, 0.15]
+    },
+    "box": {
+        "size": [8, 4.5],
+        "color": [0.6640625, 0.609375, 0.57421875]
+    },
+    "logo": {
+        "file_path": "./podcast_logo.png"
+    },
+    "audio": {
+        "audiogram_color": [0.14453125, 0.2109375, 0.2890625],
+        "frame_duration_ms": 100,
+        "max_amp": 0.1
+    }
+}

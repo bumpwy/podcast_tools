@@ -94,7 +94,7 @@ class AudioGram:
         os.system(f'ffmpeg -i {temp_dir}/clips_combined.mp4 -i {self.audio_file} -c:v copy -c:a aac -shortest {out_file}')
 
         ##### 4. Clean up #####
-        #shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir)
         
         print(f'Total processing time: {time.time()-t1} secs')
         
@@ -189,12 +189,12 @@ class AudioGram:
         matplotlib.rcParams['font.family'] = 'Heiti TC'
         ax.text(0.725*w,(h+0.4*w)/2, self.audio_meta_data['podcast_name'], 
                 ha = 'center', va = 'top',
-                fontsize=30)
+                fontsize=self.audio_meta_data['podcast_name_fs'])
         # 4.2 episode title & subtitle
-        description = textwrap.wrap(self.audio_meta_data['title'],width=22) +\
-                      textwrap.wrap(self.audio_meta_data['subtitle'],width=12)
+        description = textwrap.wrap(self.audio_meta_data['title'],width=self.audio_meta_data['title_width']) +\
+                      textwrap.wrap(self.audio_meta_data['subtitle'],width=self.audio_meta_data['subtitle_width'])
         ax.text(0.5*w,0.5*h,'\n'.join(description),
-                ha='left',va='center',fontsize=20)
+                ha='left',va='center',fontsize=self.audio_meta_data['title_fs'])
 
         return fig, ax
 
