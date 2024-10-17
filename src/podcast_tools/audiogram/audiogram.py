@@ -13,10 +13,10 @@ from mutagen.mp4 import MP4
 from mutagen.id3 import ID3
 from moviepy.editor import ImageSequenceClip, AudioFileClip
 # utilities
+import podcast_tools.audiogram.text_util as tu
 from functools import partial
 import json, os, shutil, math
 import time, glob
-import textwrap
 
 def create_audiogram_data(chunk):
     # remove DC term
@@ -57,6 +57,34 @@ def worker_audiogram_frames(queue,canvas):
 def worker_write_clip(in_files, out_file, fps=1):
     clip = ImageSequenceClip(in_files, fps=fps)  # 10 frames per second
     clip.write_videofile(out_file, codec="libx264", audio_codec="aac")
+
+def wrap_text(text, width):
+    """Wraps text considering half-width and full-width characters."""
+
+    def char_width(char):
+        """Determines the width of a character."""
+        east_asian_width = unicodedata.east_asian_width(char)
+        return 2 if east_asian_width in ('F', 'W') else 1
+
+    lines = []
+    line = ""
+    line_width = 0
+
+    for char in text:
+        char_w = char_width(char)
+
+        if line_width + char_w > width:
+            lines.append(line)
+            line = ""
+            line_width = 0
+
+        line += char
+        line_width += char_w
+
+    if line:
+        lines.append(line)
+
+    return lines
 
 class AudioGram:
     def __init__(self,audio_file,specs_file,audio_meta_data):
@@ -191,9 +219,11 @@ class AudioGram:
                 ha = 'center', va = 'top',
                 fontsize=self.audio_meta_data['podcast_name_fs'])
         # 4.2 episode title & subtitle
-        description = textwrap.wrap(self.audio_meta_data['title'],width=self.audio_meta_data['title_width']) +\
-                      textwrap.wrap(self.audio_meta_data['subtitle'],width=self.audio_meta_data['subtitle_width'])
-        ax.text(0.5*w,0.5*h,'\n'.join(description),
+        title_fs = self.audio_meta_data['title_fs']
+        char_width = tu.get_char_width(fig,ax,title_fs)
+        text_width = 0.4*w/char_width
+        title = tu.textwrap_mixed(self.audio_meta_data['title'],text_width)
+        ax.text(0.5*w,0.5*h,'\n'.join(title),
                 ha='left',va='center',fontsize=self.audio_meta_data['title_fs'])
 
         return fig, ax
