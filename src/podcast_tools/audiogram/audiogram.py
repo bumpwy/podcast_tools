@@ -58,49 +58,20 @@ def worker_write_clip(in_files, out_file, fps=1):
     clip = ImageSequenceClip(in_files, fps=fps)  # 10 frames per second
     clip.write_videofile(out_file, codec="libx264", audio_codec="aac")
 
-def wrap_text(text, width):
-    """Wraps text considering half-width and full-width characters."""
-
-    def char_width(char):
-        """Determines the width of a character."""
-        east_asian_width = unicodedata.east_asian_width(char)
-        return 2 if east_asian_width in ('F', 'W') else 1
-
-    lines = []
-    line = ""
-    line_width = 0
-
-    for char in text:
-        char_w = char_width(char)
-
-        if line_width + char_w > width:
-            lines.append(line)
-            line = ""
-            line_width = 0
-
-        line += char
-        line_width += char_w
-
-    if line:
-        lines.append(line)
-
-    return lines
 
 class AudioGram:
-    def __init__(self,audio_file,specs_file,audio_meta_data):
+    def __init__(self,audio_file,audio_md,podcast_md):
 
-        # load specs file
-        with open(specs_file) as f:
-            self.specs = json.load(f)
+        # podcast meta data
+        self.podcast_md = podcast_md
+
+        # episode meta data
+        self.audio_md = audio_md
 
         # load audio file and its meta data
         self.audio_file = audio_file
         file_type = audio_file.split('.')[-1]
         self.audio = AudioSegment.from_file(audio_file,format=file_type)
-        
-        # load audio meta data
-        with open(audio_meta_data) as f:
-            self.audio_meta_data = json.load(f)
 
     def create_audiogram_movie(self,out_file=None,n_cores=4):
         t1 = time.time()
@@ -138,7 +109,7 @@ class AudioGram:
             start += chunk_sizes[n]
 
         out_files = [f'{temp_dir}/clip_{i}.mp4' for i in range(n_cores)]
-        fps = 1000/self.specs['audio']['frame_duration_ms']
+        fps = 1000/self.podcast_md['audio']['frame_duration_ms']
 
         # multiproces mapping worker function to each chunk
         worker_func = partial(worker_write_clip,fps=fps)
@@ -159,7 +130,7 @@ class AudioGram:
         # Parameters
         sample_rate = audio.frame_rate  # Sample rate of the audio
         duration = len(samples) / sample_rate  # Duration of the audio in seconds
-        frame_duration_samples = int(sample_rate * self.specs['audio']['frame_duration_ms']/1000)  # Convert frame duration to samples
+        frame_duration_samples = int(sample_rate * self.podcast_md['audio']['frame_duration_ms']/1000)  # Convert frame duration to samples
         n_frames = math.ceil(len(samples)/frame_duration_samples)
         
         ##### Parallel Processing #####
@@ -171,8 +142,8 @@ class AudioGram:
         workers = []
         for _ in range(n_cores):
             fig, ax = self.create_background()
-            canvas = {'box_size':self.specs['box']['size'],'fig':fig,'ax':ax,'graph':None,
-                      'temp_dir':temp_dir,'color':self.specs['audio']['audiogram_color']}
+            canvas = {'box_size':self.podcast_md['box']['size'],'fig':fig,'ax':ax,'graph':None,
+                      'temp_dir':temp_dir,'color':self.podcast_md['audio']['audiogram_color']}
             worker = multiprocessing.Process(target=worker_audiogram_frames,args=(queue,canvas))
             worker.start()
             workers.append(worker)
@@ -193,12 +164,12 @@ class AudioGram:
     def create_background(self):
         
         ##### 1. Canvas #####
-        canvas = self.specs['canvas']
+        canvas = self.podcast_md['canvas']
         fig = plt.figure(figsize=canvas['size'])
         fig.patch.set_facecolor(canvas['color'])
         
         ##### 2. Middle Box #####
-        box = self.specs['box']
+        box = self.podcast_md['box']
         W, H = canvas['size']
         w, h = box['size']
         ax = fig.add_axes([(1-w/W)/2,(1-h/H)/2,w/W,h/H])
@@ -209,22 +180,22 @@ class AudioGram:
         ax.set_yticks([])
         
         ##### 3. Podcast Logo #####
-        img = mpimg.imread(self.specs['logo']['file_path'])
+        img = mpimg.imread(self.podcast_md['logo']['file_path'])
         ax.imshow(img, extent=(w*0.05,w*0.45, (h-0.4*w)/2, (h+0.4*w)/2),zorder=2)
         
         ##### 4. Textual: podcast name, title, and subtitle #####
         # 4.1 podcast name
         matplotlib.rcParams['font.family'] = 'Heiti TC'
-        ax.text(0.725*w,(h+0.4*w)/2, self.audio_meta_data['podcast_name'], 
+        ax.text(0.725*w,(h+0.4*w)/2, self.audio_md['podcast_name'], 
                 ha = 'center', va = 'top',
-                fontsize=self.audio_meta_data['podcast_name_fs'])
+                fontsize=self.audio_md['podcast_name_fs'])
         # 4.2 episode title & subtitle
-        title_fs = self.audio_meta_data['title_fs']
+        title_fs = self.audio_md['title_fs']
         char_width = tu.get_char_width(fig,ax,title_fs)
         text_width = 0.4*w/char_width
-        title = tu.textwrap_mixed(self.audio_meta_data['title'],text_width)
+        title = tu.textwrap_mixed(self.audio_md['title'],text_width)
         ax.text(0.5*w,0.5*h,'\n'.join(title),
-                ha='left',va='center',fontsize=self.audio_meta_data['title_fs'])
+                ha='left',va='center',fontsize=self.audio_md['title_fs'])
 
         return fig, ax
 
