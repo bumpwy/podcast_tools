@@ -8,9 +8,6 @@ import numpy as np
 from scipy.fftpack import fft
 # movie/audio related libraries
 from pydub import AudioSegment
-from mutagen.mp3 import MP3
-from mutagen.mp4 import MP4
-from mutagen.id3 import ID3
 from moviepy.editor import ImageSequenceClip, AudioFileClip
 # utilities
 import podcast_tools.audiogram.text_util as tu
