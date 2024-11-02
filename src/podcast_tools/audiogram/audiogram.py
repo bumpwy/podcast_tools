@@ -181,18 +181,25 @@ class AudioGram:
         ax.imshow(img, extent=(w*0.05,w*0.45, (h-0.4*w)/2, (h+0.4*w)/2),zorder=2)
         
         ##### 4. Textual: podcast name, title, and subtitle #####
+        args = {}
+        if 'font_path' in self.audio_md:
+            from matplotlib import font_manager
+            font_manager.fontManager.addfont(self.audio_md['font_path'])
+            args['font_properties'] = font_manager.FontProperties(fname=self.audio_md['font_path'])
+        else:
+            matplotlib.rcParams['font.family'] = 'Heiti TC'
+
         # 4.1 podcast name
-        matplotlib.rcParams['font.family'] = 'Heiti TC'
         ax.text(0.725*w,(h+0.4*w)/2, self.audio_md['podcast_name'], 
                 ha = 'center', va = 'top',
-                fontsize=self.audio_md['podcast_name_fs'])
+                fontsize=self.audio_md['podcast_name_fs'],**args)
         # 4.2 episode title & subtitle
         title_fs = self.audio_md['title_fs']
-        char_width = tu.get_char_width(fig,ax,title_fs)
+        char_width = tu.get_char_width(fig,ax,title_fs,args)
         text_width = 0.4*w/char_width
         title = tu.textwrap_mixed(self.audio_md['title'],text_width)
         ax.text(0.5*w,0.5*h,'\n'.join(title),
-                ha='left',va='center',fontsize=self.audio_md['title_fs'])
+                ha='left',va='center',fontsize=self.audio_md['title_fs'],**args)
 
         return fig, ax
 

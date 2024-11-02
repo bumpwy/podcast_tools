@@ -1,9 +1,9 @@
 import re
 
 """ returns the width of a character in axes coordinates """
-def get_char_width(fig,ax,fontsize):
+def get_char_width(fig,ax,fontsize,args):
     r = fig.canvas.get_renderer()
-    t = ax.text(0.5, 0.5, 'x', fontsize=fontsize)
+    t = ax.text(0.5, 0.5, 'x', fontsize=fontsize,**args)
     
     bb = t.get_window_extent(renderer=r).transformed(ax.transData.inverted())
     width = bb.width
