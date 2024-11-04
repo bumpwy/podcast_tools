@@ -51,6 +51,8 @@ def worker_audiogram_frames(queue,canvas):
         plt.savefig(f'{temp_dir}/frame_{i}.png')
 
         queue.task_done()
+    plt.close(fig)
+
 def worker_write_clip(in_files, out_file, fps=1):
     clip = ImageSequenceClip(in_files, fps=fps)  # 10 frames per second
     clip.write_videofile(out_file, codec="libx264", audio_codec="aac")
